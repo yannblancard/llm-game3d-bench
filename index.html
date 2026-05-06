@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Code Benchmark — Survival Arena 3D</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a14;
+      color: #e8e8f0;
+      font-family: system-ui, sans-serif;
+      line-height: 1.6;
+      padding: 2rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      color: #4af0ff;
+      margin-bottom: 0.25rem;
+    }
+
+    header h2 {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #b0b0c0;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #787888;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .card {
+      background: #12121e;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      position: relative;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: #4af0ff;
+    }
+
+    .badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .badge.local {
+      background: rgba(255, 153, 68, 0.15);
+      color: #ff9944;
+      border: 1px solid rgba(255, 153, 68, 0.3);
+    }
+
+    .badge.cloud {
+      background: rgba(170, 136, 255, 0.15);
+      color: #aa88ff;
+      border: 1px solid rgba(170, 136, 255, 0.3);
+    }
+
+    .card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.1rem;
+    }
+
+    .card .host {
+      font-size: 0.8rem;
+      color: #787888;
+      margin-bottom: 1rem;
+    }
+
+    .stats {
+      list-style: none;
+      margin-bottom: 1rem;
+    }
+
+    .stats li {
+      font-size: 0.85rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #1e1e2e;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stats li:last-child { border-bottom: none; }
+
+    .stats .label { color: #787888; }
+
+    .stats .value {
+      color: #c8c8d8;
+      text-align: right;
+      max-width: 60%;
+    }
+
+    .verdict {
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      color: #4af0ff;
+      font-style: italic;
+    }
+
+    .verdict strong {
+      color: #e8e8f0;
+      font-style: normal;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.5rem 1.2rem;
+      border: 1px solid #4af0ff;
+      color: #4af0ff;
+      border-radius: 4px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #4af0ff;
+      color: #0a0a14;
+    }
+
+    .section {
+      background: #12121e;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .section h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #4af0ff;
+      margin-bottom: 0.75rem;
+    }
+
+    .section p {
+      font-size: 0.9rem;
+      color: #b0b0c0;
+    }
+
+    .section .note {
+      font-size: 0.8rem;
+      color: #787888;
+      margin-top: 0.5rem;
+    }
+
+    details {
+      background: #12121e;
+      border: 1px solid #2a2a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e8e8f0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    details summary::-webkit-details-marker { display: none; }
+
+    details summary::before {
+      content: "▸";
+      display: inline-block;
+      transition: transform 0.15s ease;
+      color: #4af0ff;
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    details pre {
+      margin-top: 1rem;
+      background: #0a0a14;
+      border: 1px solid #1e1e2e;
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      color: #b0b0c0;
+    }
+
+    details pre code {
+      font-family: system-ui, sans-serif;
+    }
+
+    .repro {
+      font-size: 0.8rem;
+      color: #787888;
+      margin-top: 0.75rem;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #585868;
+      padding-top: 2rem;
+      border-top: 1px solid #1e1e2e;
+    }
+
+    footer a {
+      color: #4af0ff;
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>LLM Code Benchmark</h1>
+    <h2>Survival Arena 3D — 4 modèles, même prompt</h2>
+    <p>Testez les démos. Le code est tel que produit par chaque modèle. Aucune retouche.</p>
+  </header>
+
+  <main class="grid">
+
+    <article class="card">
+      <span class="badge local">LOCAL</span>
+      <h3>Qwen 3.6-27B</h3>
+      <p class="host">vLLM, RTX 5090</p>
+      <ul class="stats">
+        <li><span class="label">Durée</span><span class="value">25 min</span></li>
+        <li><span class="label">Lignes</span><span class="value">752</span></li>
+        <li><span class="label">Particularité</span><span class="value">Combat implémenté, gestion mémoire GPU propre</span></li>
+      </ul>
+      <p class="verdict"><strong>Verdict :</strong> Le seul jouable et fluide.</p>
+      <a class="btn" href="./qwen/">Jouer la démo</a>
+    </article>
+
+    <article class="card">
+      <span class="badge cloud">CLOUD (US)</span>
+      <h3>Claude Haiku 4.5</h3>
+      <p class="host">API Anthropic</p>
+      <ul class="stats">
+        <li><span class="label">Durée</span><span class="value">1 min</span></li>
+        <li><span class="label">Lignes</span><span class="value">902</span></li>
+        <li><span class="label">Particularité</span><span class="value">Mouvement TPS cassé</span></li>
+      </ul>
+      <p class="verdict"><strong>Verdict :</strong> Volume sans substance.</p>
+      <a class="btn" href="./haiku/">Jouer la démo</a>
+    </article>
+
+    <article class="card">
+      <span class="badge cloud">CLOUD (US)</span>
+      <h3>Claude Sonnet 4.6</h3>
+      <p class="host">API Anthropic</p>
+      <ul class="stats">
+        <li><span class="label">Durée</span><span class="value">8 min</span></li>
+        <li><span class="label">Lignes</span><span class="value">791</span></li>
+        <li><span class="label">Particularité</span><span class="value">Code le plus propre, combat absent, lag</span></li>
+      </ul>
+      <p class="verdict"><strong>Verdict :</strong> Beau code, jeu injouable.</p>
+      <a class="btn" href="./sonnet/">Jouer la démo</a>
+    </article>
+
+    <article class="card">
+      <span class="badge cloud">CLOUD (US)</span>
+      <h3>Claude Opus 4.6</h3>
+      <p class="host">API Anthropic</p>
+      <ul class="stats">
+        <li><span class="label">Durée</span><span class="value">11 min</span></li>
+        <li><span class="label">Lignes</span><span class="value">930</span></li>
+        <li><span class="label">Particularité</span><span class="value">Game feel réussi, polish visuel, combat absent</span></li>
+      </ul>
+      <p class="verdict"><strong>Verdict :</strong> Polish sans gameplay.</p>
+      <a class="btn" href="./opus/">Jouer la démo</a>
+    </article>
+
+  </main>
+
+  <section class="section">
+    <h3>Méthodologie</h3>
+    <p>Même prompt envoyé textuellement aux 4 modèles via Claude Code (sessions fraîches, contrainte de 16k tokens output). Trois ennemis distincts, HUD, particules, shadow mapping. Aucune retouche post-génération.</p>
+    <p class="note">Meilleure expérience sur Chrome desktop (Pointer Lock + ZQSD/WASD).</p>
+  </section>
+
+  <details>
+    <summary>Prompt utilisé</summary>
+    <pre><code>Crée un jeu 3D complet en HTML/JavaScript single-file utilisant Three.js (CDN: https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js).
+
+CONCEPT : "Survival Arena" - Le joueur contrôle un cube qui doit survivre dans une arène circulaire pendant que des sphères ennemies spawneent et le poursuivent. Récolter des cristaux dorés pour gagner des points.
+
+EXIGENCES TECHNIQUES :
+- Single file HTML, aucune dépendance externe sauf Three.js CDN
+- Pas de localStorage/sessionStorage
+- 60 FPS stable, requestAnimationFrame propre avec deltaTime
+- Pointer Lock API pour la caméra FPS/TPS
+- Physique simple maison (pas de lib externe) : gravité, collisions AABB+sphère
+
+GAMEPLAY :
+- Déplacement ZQSD/WASD + Espace pour sauter
+- Caméra TPS qui suit le joueur avec offset configurable
+- 3 types d'ennemis avec comportements distincts :
+  * Chasseur (rouge) : poursuit en ligne droite
+  * Embusqueur (violet) : se téléporte près du joueur toutes les 5s
+  * Sentinelle (orange) : patrouille un cercle, tire des projectiles
+- Spawn progressif (1 ennemi/10s, max 15)
+- Cristaux dorés qui spawneent aléatoirement, +10 points
+- Vie du joueur : 100 HP, dégâts au contact, régen lente hors combat
+- Game over avec écran de fin et score
+
+QUALITÉ VISUELLE :
+- Lumière directionnelle + ambient + shadow mapping
+- Sol avec texture procédurale (canvas 2D générée)
+- Particules au ramassage de cristal et à la mort d'ennemi
+- HUD overlay HTML : HP bar, score, vague actuelle, ennemis restants
+- Skybox gradient ou couleur unie atmosphérique
+- Brouillard exponentiel pour la profondeur
+
+STRUCTURE DU CODE :
+- Architecture en classes ES6 : Game, Player, Enemy (+ sous-classes), Crystal, ParticleSystem, InputManager, HUD
+- Game loop avec états : MENU, PLAYING, GAME_OVER
+- Code commenté en français, sections clairement séparées
+
+LIVRABLE : un seul fichier .html prêt à ouvrir dans Chrome, fonctionnel au premier essai, sans erreur console.</code></pre>
+    <p class="repro">Reproductible : clone le repo, copie ce prompt dans Claude Code, compare tes résultats.</p>
+  </details>
+
+  <footer>
+    <p>Benchmark réalisé par Yann B. — <a href="https://cloud-art.fr">Cloud-Art</a> · 2026</p>
+  </footer>
+
+</body>
+</html>
